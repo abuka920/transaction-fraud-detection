@@ -13,3 +13,6 @@ alerts_output.csv
 Thumbs.db
 .idea/
 .vscode/
+
+# Demo queue for the hosted dashboard
+!demo/alerts.json
