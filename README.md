@@ -1,5 +1,7 @@
 # Transaction Fraud Detection System
 
+**Live demo:** https://kalif-fraud-detection.streamlit.app
+
 XGBoost + LightGBM ensemble for card fraud detection on heavily imbalanced data (0.5% fraud), with SHAP explanations for every alert and an analyst review queue. Built with my fraud investigation work supporting CIBC in mind.
 
 ## The core problem
