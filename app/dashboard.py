@@ -23,8 +23,10 @@ def bootstrap():
     if (MODELS_DIR / "ensemble_model.joblib").exists() and ALERTS_PATH.exists():
         return
     with st.spinner("First run: generating data, training the model and scoring alerts (about 1-2 minutes)..."):
+        import os
+        env = {**os.environ, "N_JOBS": "2", "OMP_NUM_THREADS": "2"}
         run = lambda *args: subprocess.run([sys.executable, *args], cwd=PROJECT_ROOT,
-                                           check=True, capture_output=True, text=True)
+                                           check=True, env=env)
         if not (MODELS_DIR / "ensemble_model.joblib").exists():
             run("train.py")
         threshold = 0.4

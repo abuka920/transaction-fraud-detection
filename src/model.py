@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -12,6 +13,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+
+# Threads for XGBoost/LightGBM. -1 = all cores. Shared hosts (e.g. Streamlit Cloud)
+# report many cores but only allow ~2, and oversubscribing them makes training crawl.
+N_JOBS = int(os.environ.get("N_JOBS", "-1"))
 
 
 class FraudEnsemble(BaseEstimator, ClassifierMixin):
@@ -32,13 +38,13 @@ class FraudEnsemble(BaseEstimator, ClassifierMixin):
             subsample=0.8, colsample_bytree=0.8,
             scale_pos_weight=n_neg/max(n_pos,1),
             eval_metric="aucpr", random_state=self.random_state,
-            n_jobs=-1, verbosity=0,
+            n_jobs=N_JOBS, verbosity=0,
         )
         self.lgb_model = lgb.LGBMClassifier(
             n_estimators=400, max_depth=6, learning_rate=0.05,
             subsample=0.8, colsample_bytree=0.8,
             class_weight="balanced", random_state=self.random_state,
-            n_jobs=-1, verbose=-1,
+            n_jobs=N_JOBS, verbose=-1,
         )
         self.xgb_model.fit(X_train, y_train)
         self.lgb_model.fit(X_train, y_train)
