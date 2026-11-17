@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.pyo
+env/
+venv/
+.venv/
+models/
+*.csv
+alerts.json
+alerts_output.csv
+.env
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
