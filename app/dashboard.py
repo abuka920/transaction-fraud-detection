@@ -17,22 +17,35 @@ st.set_page_config(page_title="Fraud Detection Dashboard", page_icon="🔍", lay
 
 
 def bootstrap():
-    """First run (e.g. a fresh clone or the hosted demo): train the model and
-    fill the analyst queue so the dashboard has something to show."""
-    import subprocess
-    if (MODELS_DIR / "ensemble_model.joblib").exists() and ALERTS_PATH.exists():
+    """Make sure there is a model and an alert queue to show.
+
+    1. Use the pre-trained demo model in demo/ (instant, used by the hosted demo).
+    2. If that's missing or won't load (e.g. library version mismatch), train from scratch.
+    """
+    import os, shutil, subprocess
+    demo_dir = PROJECT_ROOT / "demo"
+    if not (MODELS_DIR / "ensemble_model.joblib").exists() and demo_dir.exists():
+        MODELS_DIR.mkdir(exist_ok=True)
+        for f in demo_dir.iterdir():
+            if f.name != "alerts.json":
+                shutil.copy(f, MODELS_DIR / f.name)
+    if not ALERTS_PATH.exists() and (demo_dir / "alerts.json").exists():
+        shutil.copy(demo_dir / "alerts.json", ALERTS_PATH)
+
+    try:
+        from src.model import load_model
+        load_model(MODELS_DIR)
+        model_ok = True
+    except Exception:
+        model_ok = False
+    if model_ok and ALERTS_PATH.exists():
         return
+
     with st.spinner("First run: generating data, training the model and scoring alerts (about 1-2 minutes)..."):
-        import os
         env = {**os.environ, "N_JOBS": "2", "OMP_NUM_THREADS": "2"}
-        run = lambda *args: subprocess.run([sys.executable, *args], cwd=PROJECT_ROOT,
-                                           check=True, env=env)
-        if not (MODELS_DIR / "ensemble_model.joblib").exists():
-            run("train.py")
-        threshold = 0.4
-        metrics_path = MODELS_DIR / "metrics.json"
-        if metrics_path.exists():
-            threshold = round(json.loads(metrics_path.read_text()).get("threshold", 0.4), 2)
+        run = lambda *args: subprocess.run([sys.executable, *args], cwd=PROJECT_ROOT, check=True, env=env)
+        run("train.py")
+        threshold = round(json.loads((MODELS_DIR / "metrics.json").read_text()).get("threshold", 0.4), 2)
         run("predict.py", "--input", "sample_data/sample_transactions.csv",
             "--threshold", str(threshold), "--max-alerts", "50")
 
